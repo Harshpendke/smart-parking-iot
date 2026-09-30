@@ -11,7 +11,6 @@
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-
     <style>
 
         /* ============================================================
@@ -23,7 +22,6 @@
             margin: 0;
             padding: 0;
         }
-
 
         body {
 
@@ -184,6 +182,17 @@
 
             margin-left: auto;
 
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .admin-badge {
+
             background: #1e3a8a;
 
             border:
@@ -196,6 +205,51 @@
             font-weight: bold;
 
             font-size: 12px;
+
+        }
+
+
+        /* ============================================================
+           LOGOUT BUTTON
+        ============================================================ */
+
+        .logout-btn {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 9px 15px;
+
+            background: #dc2626;
+
+            border:
+                1px solid #ef4444;
+
+            color: #ffffff;
+
+            border-radius: 8px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition: 0.2s ease;
+
+        }
+
+
+        .logout-btn:hover {
+
+            background: #b91c1c;
+
+            border-color: #f87171;
 
         }
 
@@ -1110,8 +1164,7 @@
 
             }
 
-
-            .nav-admin {
+            .admin-badge {
 
                 display: none;
 
@@ -1162,6 +1215,14 @@
             .nav-link {
 
                 padding: 0 7px;
+
+            }
+
+            .logout-btn {
+
+                padding: 8px 10px;
+
+                font-size: 11px;
 
             }
 
@@ -1281,9 +1342,20 @@
     </div>
 
 
+    <!-- ADMIN + LOGOUT -->
+
     <div class="nav-admin">
 
-        ADMIN PANEL
+        <div class="admin-badge">
+            ADMIN PANEL
+        </div>
+
+        <a
+            href="/logout"
+            class="logout-btn"
+        >
+            🔴 LOGOUT
+        </a>
 
     </div>
 
@@ -1593,8 +1665,6 @@
             <div class="slots-grid">
 
 
-                <!-- SLOT 1 -->
-
                 <div
                     id="slot1"
                     class="slot-card"
@@ -1625,8 +1695,6 @@
                 </div>
 
 
-                <!-- SLOT 2 -->
-
                 <div
                     id="slot2"
                     class="slot-card"
@@ -1656,8 +1724,6 @@
 
                 </div>
 
-
-                <!-- SLOT 3 -->
 
                 <div
                     id="slot3"
@@ -1860,8 +1926,6 @@
             </div>
 
 
-            <!-- PAYMENT SUMMARY -->
-
             <div class="payment-summary">
 
 
@@ -1955,21 +2019,13 @@
 
                     <tr>
 
-                        <th>
-                            Time
-                        </th>
+                        <th>Time</th>
 
-                        <th>
-                            Slot 1
-                        </th>
+                        <th>Slot 1</th>
 
-                        <th>
-                            Slot 2
-                        </th>
+                        <th>Slot 2</th>
 
-                        <th>
-                            Slot 3
-                        </th>
+                        <th>Slot 3</th>
 
                     </tr>
 
@@ -2328,8 +2384,6 @@
                 available;
 
 
-            /* PARKING FULL */
-
             const fullMessage =
                 document.getElementById(
                     "fullMessage"
@@ -2352,8 +2406,6 @@
 
             }
 
-
-            /* HARDWARE */
 
             const greenText =
                 document.getElementById(

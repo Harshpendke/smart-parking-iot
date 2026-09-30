@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for
 import serial
 import threading
 import sqlite3
@@ -9,6 +9,15 @@ import os
 import razorpay
 
 app = Flask(__name__)
+
+# ==========================================
+# ADMIN LOGIN SETTINGS
+# ==========================================
+
+app.secret_key = "smart_parking_admin_secret_key"
+
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
 
 # ==========================================
 # ESP32 SETTINGS
@@ -429,6 +438,97 @@ def end_parking_session(slot):
 
 
 # ==========================================
+# ADMIN LOGIN
+# ==========================================
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    # --------------------------------------
+    # Already logged in
+    # --------------------------------------
+
+    if session.get("admin_logged_in"):
+
+        return redirect(
+            url_for("home")
+        )
+
+    # --------------------------------------
+    # Login form submitted
+    # --------------------------------------
+
+    if request.method == "POST":
+
+        username = request.form.get(
+            "username",
+            ""
+        ).strip()
+
+        password = request.form.get(
+            "password",
+            ""
+        )
+
+        # ----------------------------------
+        # Check credentials
+        # ----------------------------------
+
+        if (
+            username == ADMIN_USERNAME
+            and
+            password == ADMIN_PASSWORD
+        ):
+
+            session["admin_logged_in"] = True
+
+            session["admin_username"] = username
+
+            return redirect(
+                url_for("home")
+            )
+
+        # ----------------------------------
+        # Invalid login
+        # ----------------------------------
+
+        return render_template(
+            "login.html",
+            error="Invalid username or password."
+        )
+
+    # --------------------------------------
+    # Display login page
+    # --------------------------------------
+
+    return render_template(
+        "login.html"
+    )
+
+
+# ==========================================
+# ADMIN LOGOUT
+# ==========================================
+
+@app.route("/logout")
+def logout():
+
+    session.pop(
+        "admin_logged_in",
+        None
+    )
+
+    session.pop(
+        "admin_username",
+        None
+    )
+
+    return redirect(
+        url_for("login")
+    )
+
+
+# ==========================================
 # CREATE RAZORPAY ORDER
 # PAYMENT SECTION
 # ==========================================
@@ -542,13 +642,13 @@ def create_order():
         WHERE id = ?
     """, (session_id,))
 
-    session = cursor.fetchone()
+    session_record = cursor.fetchone()
 
     # --------------------------------------
     # Session not found
     # --------------------------------------
 
-    if session is None:
+    if session_record is None:
 
         conn.close()
 
@@ -563,14 +663,14 @@ def create_order():
 
     print(
         "Session found:",
-        dict(session)
+        dict(session_record)
     )
 
     # --------------------------------------
     # Payment already completed
     # --------------------------------------
 
-    if session["payment_status"] == "PAID":
+    if session_record["payment_status"] == "PAID":
 
         conn.close()
 
@@ -587,7 +687,7 @@ def create_order():
     # Session must be completed
     # --------------------------------------
 
-    if session["exit_time"] is None:
+    if session_record["exit_time"] is None:
 
         conn.close()
 
@@ -604,7 +704,7 @@ def create_order():
     # Amount validation
     # --------------------------------------
 
-    if session["amount"] is None:
+    if session_record["amount"] is None:
 
         conn.close()
 
@@ -618,7 +718,7 @@ def create_order():
         }), 400
 
     amount_rupees = float(
-        session["amount"]
+        session_record["amount"]
     )
 
     amount_paise = int(
@@ -673,17 +773,17 @@ def create_order():
 
             "receipt":
                 "parking_" +
-                str(session["id"]) +
+                str(session_record["id"]) +
                 "_" +
                 str(int(time.time())),
 
             "notes": {
 
                 "parking_session_id":
-                    str(session["id"]),
+                    str(session_record["id"]),
 
                 "slot":
-                    session["slot"]
+                    session_record["slot"]
             }
         }
 
@@ -717,7 +817,7 @@ def create_order():
             WHERE id = ?
         """, (
             razorpay_order_id,
-            session["id"]
+            session_record["id"]
         ))
 
         conn.commit()
@@ -729,11 +829,11 @@ def create_order():
         print("===================================")
         print(
             "Session ID:",
-            session["id"]
+            session_record["id"]
         )
         print(
             "Slot:",
-            session["slot"]
+            session_record["slot"]
         )
         print(
             "Amount: ₹",
@@ -762,7 +862,7 @@ def create_order():
                 razorpay_order_id,
 
             "session_id":
-                session["id"],
+                session_record["id"],
 
             "amount":
                 amount_paise,
@@ -777,10 +877,6 @@ def create_order():
     except Exception as e:
 
         conn.close()
-
-        # ==================================
-        # IMPORTANT DEBUG INFORMATION
-        # ==================================
 
         print()
         print("===================================")
@@ -904,9 +1000,9 @@ def verify_payment():
         WHERE id = ?
     """, (session_id,))
 
-    session = cursor.fetchone()
+    session_record = cursor.fetchone()
 
-    if session is None:
+    if session_record is None:
 
         conn.close()
 
@@ -915,7 +1011,7 @@ def verify_payment():
             "message": "Parking session not found."
         }), 404
 
-    if session["payment_status"] == "PAID":
+    if session_record["payment_status"] == "PAID":
 
         conn.close()
 
@@ -925,9 +1021,9 @@ def verify_payment():
         })
 
     if (
-        session["razorpay_order_id"]
+        session_record["razorpay_order_id"]
         and
-        session["razorpay_order_id"]
+        session_record["razorpay_order_id"]
         != razorpay_order_id
     ):
 
@@ -1393,11 +1489,23 @@ def read_esp32():
 
 
 # ==========================================
-# MAIN DASHBOARD
+# MAIN ADMIN DASHBOARD
 # ==========================================
 
 @app.route("/")
 def home():
+
+    # --------------------------------------
+    # Check admin login
+    # --------------------------------------
+
+    if not session.get(
+        "admin_logged_in"
+    ):
+
+        return redirect(
+            url_for("login")
+        )
 
     return render_template(
         "index.html"
@@ -1415,54 +1523,79 @@ def user_dashboard():
         "user.html"
     )
 
+
 # ==========================================
-# Cash payment endpoint
+# CASH PAYMENT ENDPOINT
 # ==========================================
 
 @app.route("/cash-payment", methods=["POST"])
 def cash_payment():
+
     try:
+
         data = request.get_json()
 
-        session_id = data.get("session_id")
+        session_id = data.get(
+            "session_id"
+        )
 
         if not session_id:
+
             return jsonify({
-                "error": "Session ID is required"
+                "error":
+                    "Session ID is required"
             }), 400
 
-        conn = sqlite3.connect(DATABASE)
+        conn = sqlite3.connect(
+            DATABASE
+        )
+
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT id, amount, exit_time, payment_status
+            SELECT
+                id,
+                amount,
+                exit_time,
+                payment_status
             FROM parking_sessions
             WHERE id = ?
         """, (session_id,))
 
-        session = cursor.fetchone()
+        session_record = cursor.fetchone()
 
-        if not session:
+        if not session_record:
+
             conn.close()
 
             return jsonify({
-                "error": "Parking session not found"
+                "error":
+                    "Parking session not found"
             }), 404
 
-        session_id_db, amount, exit_time, payment_status = session
+        (
+            session_id_db,
+            amount,
+            exit_time,
+            payment_status
+        ) = session_record
 
         if not exit_time:
+
             conn.close()
 
             return jsonify({
-                "error": "Vehicle has not exited yet"
+                "error":
+                    "Vehicle has not exited yet"
             }), 400
 
         if payment_status == "PAID":
+
             conn.close()
 
             return jsonify({
-                "error": "Payment already completed"
+                "error":
+                    "Payment already completed"
             }), 400
 
         payment_time = datetime.now().strftime(
@@ -1484,19 +1617,32 @@ def cash_payment():
         conn.close()
 
         return jsonify({
-            "success": True,
-            "message": "Cash payment recorded",
-            "transaction_id": "CASH",
-            "payment_time": payment_time
+
+            "success":
+                True,
+
+            "message":
+                "Cash payment recorded",
+
+            "transaction_id":
+                "CASH",
+
+            "payment_time":
+                payment_time
         })
 
     except Exception as e:
 
-        print("CASH PAYMENT ERROR:", e)
+        print(
+            "CASH PAYMENT ERROR:",
+            e
+        )
 
         return jsonify({
-            "error": str(e)
+            "error":
+                str(e)
         }), 500
+
 
 # ==========================================
 # CURRENT STATUS API
