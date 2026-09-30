@@ -1,0 +1,3309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Parking - Admin Dashboard</title>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+
+    <style>
+
+        /* ============================================================
+           GLOBAL
+        ============================================================ */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        body {
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #08111f;
+
+            color: #ffffff;
+
+            min-height: 100vh;
+
+        }
+
+
+        /* ============================================================
+           NAVBAR
+        ============================================================ */
+
+        .navbar {
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            height: 70px;
+
+            z-index: 1000;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #111c35,
+                    #172554
+                );
+
+            border-bottom:
+                1px solid #26365c;
+
+            display: flex;
+
+            align-items: center;
+
+            padding: 0 30px;
+
+            box-shadow:
+                0 5px 20px rgba(0,0,0,0.30);
+
+        }
+
+
+        .nav-logo {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+
+            font-size: 21px;
+
+            font-weight: bold;
+
+            color: #ffffff;
+
+            white-space: nowrap;
+
+            margin-right: 35px;
+
+        }
+
+
+        .nav-logo-icon {
+
+            font-size: 25px;
+
+        }
+
+
+        .nav-links {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            height: 100%;
+
+        }
+
+
+        .nav-link {
+
+            height: 42px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            padding: 0 15px;
+
+            border-radius: 8px;
+
+            color: #aab8d4;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            text-decoration: none;
+
+            transition: 0.2s ease;
+
+        }
+
+
+        .nav-link:hover {
+
+            color: #ffffff;
+
+            background:
+                rgba(59,130,246,0.12);
+
+        }
+
+
+        .nav-link.active {
+
+            color: #ffffff;
+
+            background: #1e3a8a;
+
+            border:
+                1px solid #3b82f6;
+
+        }
+
+
+        .nav-icon {
+
+            font-size: 16px;
+
+        }
+
+
+        .nav-admin {
+
+            margin-left: auto;
+
+            background: #1e3a8a;
+
+            border:
+                1px solid #3b82f6;
+
+            padding: 9px 16px;
+
+            border-radius: 20px;
+
+            font-weight: bold;
+
+            font-size: 12px;
+
+        }
+
+
+        /* ============================================================
+           MAIN
+        ============================================================ */
+
+        .main {
+
+            max-width: 1400px;
+
+            margin: auto;
+
+            padding:
+                100px 30px 50px;
+
+        }
+
+
+        /* ============================================================
+           PAGE SECTIONS
+        ============================================================ */
+
+        .page-section {
+
+            display: none;
+
+            animation:
+                fadeIn 0.25s ease;
+
+        }
+
+
+        .page-section.active-page {
+
+            display: block;
+
+        }
+
+
+        @keyframes fadeIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(8px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+
+            }
+
+        }
+
+
+        /* ============================================================
+           HEADER
+        ============================================================ */
+
+        .page-header {
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .page-header h1 {
+
+            font-size: 28px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+        .page-header p {
+
+            color: #aab8d4;
+
+            font-size: 14px;
+
+        }
+
+
+        .section-heading {
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .section-heading h2 {
+
+            font-size: 23px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+        .section-heading p {
+
+            color: #8ea1c7;
+
+            font-size: 13px;
+
+        }
+
+
+        /* ============================================================
+           SYSTEM STATUS
+        ============================================================ */
+
+        .system-status {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 15px;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .status-box {
+
+            background: #101b30;
+
+            border:
+                1px solid #26365c;
+
+            border-radius: 12px;
+
+            padding: 16px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+        }
+
+
+        .status-dot {
+
+            width: 12px;
+
+            height: 12px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow:
+                0 0 10px #22c55e;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .status-text strong {
+
+            display: block;
+
+            font-size: 14px;
+
+        }
+
+
+        .status-text span {
+
+            color: #8ea1c7;
+
+            font-size: 12px;
+
+        }
+
+
+        /* ============================================================
+           SUMMARY
+        ============================================================ */
+
+        .summary-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 20px;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .summary-card {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #111c35,
+                    #0f172a
+                );
+
+            border:
+                1px solid #26365c;
+
+            border-radius: 15px;
+
+            padding: 25px;
+
+        }
+
+
+        .summary-title {
+
+            color: #94a3c7;
+
+            font-size: 14px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .summary-value {
+
+            font-size: 38px;
+
+            font-weight: bold;
+
+        }
+
+
+        .summary-card.total
+        .summary-value {
+
+            color: #60a5fa;
+
+        }
+
+
+        .summary-card.available
+        .summary-value {
+
+            color: #4ade80;
+
+        }
+
+
+        .summary-card.occupied
+        .summary-value {
+
+            color: #f87171;
+
+        }
+
+
+        /* ============================================================
+           FULL MESSAGE
+        ============================================================ */
+
+        .full-message {
+
+            display: none;
+
+            background:
+                rgba(127,29,29,0.30);
+
+            border:
+                1px solid #ef4444;
+
+            color: #fca5a5;
+
+            padding: 15px;
+
+            border-radius: 10px;
+
+            margin-bottom: 25px;
+
+            text-align: center;
+
+            font-weight: bold;
+
+        }
+
+
+        .full-message.show {
+
+            display: block;
+
+        }
+
+
+        /* ============================================================
+           SECTION
+        ============================================================ */
+
+        .section {
+
+            background: #0e192d;
+
+            border:
+                1px solid #26365c;
+
+            border-radius: 15px;
+
+            padding: 22px;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .section-title {
+
+            font-size: 20px;
+
+            font-weight: bold;
+
+            margin-bottom: 6px;
+
+        }
+
+
+        .section-subtitle {
+
+            color: #8497ba;
+
+            font-size: 13px;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        /* ============================================================
+           PARKING SLOTS
+        ============================================================ */
+
+        .slots-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 20px;
+
+        }
+
+
+        .slot-card {
+
+            background: #111c31;
+
+            border:
+                1px solid #26365c;
+
+            border-radius: 15px;
+
+            padding: 22px;
+
+            min-height: 220px;
+
+            text-align: center;
+
+            transition: 0.2s;
+
+        }
+
+
+        .slot-card.occupied {
+
+            border-color: #ef4444;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #211827,
+                    #171827
+                );
+
+        }
+
+
+        .slot-name {
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .vehicle-area {
+
+            height: 105px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+        }
+
+
+        .car {
+
+            font-size: 70px;
+
+        }
+
+
+        .empty {
+
+            font-size: 58px;
+
+            color: #3b82f6;
+
+            font-weight: bold;
+
+        }
+
+
+        .slot-status {
+
+            font-weight: bold;
+
+            font-size: 15px;
+
+        }
+
+
+        .slot-status.green {
+
+            color: #4ade80;
+
+        }
+
+
+        .slot-status.red {
+
+            color: #f87171;
+
+        }
+
+
+        /* ============================================================
+           HARDWARE
+        ============================================================ */
+
+        .hardware-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 15px;
+
+        }
+
+
+        .hardware-card {
+
+            background: #111c31;
+
+            border:
+                1px solid #26365c;
+
+            border-radius: 12px;
+
+            padding: 20px;
+
+            text-align: center;
+
+        }
+
+
+        .hardware-icon {
+
+            font-size: 38px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .hardware-card h3 {
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .hardware-card p {
+
+            color: #8497ba;
+
+            font-size: 13px;
+
+        }
+
+
+        /* ============================================================
+           STATISTICS
+        ============================================================ */
+
+        .statistics-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 15px;
+
+        }
+
+
+        .stat-box {
+
+            background: #111c31;
+
+            border:
+                1px solid #26365c;
+
+            padding: 18px;
+
+            border-radius: 10px;
+
+            text-align: center;
+
+        }
+
+
+        .stat-icon {
+
+            font-size: 25px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .stat-box span {
+
+            display: block;
+
+            color: #899abd;
+
+            font-size: 13px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .stat-box strong {
+
+            display: block;
+
+            font-size: 23px;
+
+        }
+
+
+        /* ============================================================
+           TABLE
+        ============================================================ */
+
+        .table-container {
+
+            width: 100%;
+
+            overflow-x: auto;
+
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 900px;
+
+        }
+
+
+        th {
+
+            background:
+                rgba(37,99,235,0.25);
+
+            color: #93c5fd;
+
+            padding: 14px;
+
+            text-align: center;
+
+            font-size: 13px;
+
+        }
+
+
+        td {
+
+            padding: 13px;
+
+            text-align: center;
+
+            border-bottom:
+                1px solid
+                rgba(255,255,255,0.06);
+
+            font-size: 13px;
+
+        }
+
+
+        tr:hover {
+
+            background:
+                rgba(255,255,255,0.03);
+
+        }
+
+
+        .history-empty {
+
+            text-align: center;
+
+            color: #64748b;
+
+            padding: 25px;
+
+        }
+
+
+        .history-occupied {
+
+            color: #f87171;
+
+            font-weight: bold;
+
+        }
+
+
+        .history-available {
+
+            color: #4ade80;
+
+            font-weight: bold;
+
+        }
+
+
+        /* ============================================================
+           PAYMENT
+        ============================================================ */
+
+        .payment-summary {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 15px;
+
+            margin-top: 20px;
+
+        }
+
+
+        .payment-box {
+
+            background: #111c31;
+
+            border:
+                1px solid #26365c;
+
+            padding: 18px;
+
+            border-radius: 10px;
+
+        }
+
+
+        .payment-box-title {
+
+            color: #899abd;
+
+            font-size: 13px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .payment-box-value {
+
+            font-size: 22px;
+
+            font-weight: bold;
+
+        }
+
+
+        .payment-paid {
+
+            color: #4ade80;
+
+            font-weight: bold;
+
+        }
+
+
+        .payment-pending {
+
+            color: #facc15;
+
+            font-weight: bold;
+
+        }
+
+
+        .cash-paid {
+
+            color: #4ade80;
+
+            font-weight: bold;
+
+        }
+
+
+        .cash-btn {
+
+            background: #16a34a;
+
+            border: 1px solid #22c55e;
+
+            color: white;
+
+            padding: 8px 12px;
+
+            border-radius: 7px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+
+        .cash-btn:hover {
+
+            background: #15803d;
+
+        }
+
+
+        /* ============================================================
+           INFORMATION
+        ============================================================ */
+
+        .info-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 15px;
+
+        }
+
+
+        .info-item {
+
+            background: #111c31;
+
+            border:
+                1px solid #26365c;
+
+            padding: 18px;
+
+            border-radius: 10px;
+
+        }
+
+
+        .info-label {
+
+            color: #8497ba;
+
+            font-size: 12px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+        .info-value {
+
+            font-weight: bold;
+
+            font-size: 15px;
+
+        }
+
+
+        /* ============================================================
+           FOOTER
+        ============================================================ */
+
+        footer {
+
+            text-align: center;
+
+            color: #607394;
+
+            font-size: 12px;
+
+            padding: 20px;
+
+        }
+
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+
+        @media (max-width: 1100px) {
+
+            .nav-link {
+
+                padding: 0 9px;
+
+            }
+
+            .nav-link-text {
+
+                display: none;
+
+            }
+
+            .nav-icon {
+
+                font-size: 18px;
+
+            }
+
+        }
+
+
+        @media (max-width: 900px) {
+
+            .system-status,
+            .statistics-grid {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+
+            .summary-grid,
+            .slots-grid,
+            .hardware-grid,
+            .payment-summary,
+            .info-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .navbar {
+
+                padding: 0 15px;
+
+            }
+
+
+            .nav-logo {
+
+                margin-right: 10px;
+
+            }
+
+
+            .nav-admin {
+
+                display: none;
+
+            }
+
+        }
+
+
+        @media (max-width: 600px) {
+
+            .main {
+
+                padding:
+                    90px 15px 30px;
+
+            }
+
+
+            .system-status,
+            .statistics-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .navbar {
+
+                height: 65px;
+
+            }
+
+
+            .nav-logo span:last-child {
+
+                display: none;
+
+            }
+
+
+            .nav-links {
+
+                margin-left: auto;
+
+            }
+
+
+            .nav-link {
+
+                padding: 0 7px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ============================================================
+     NAVBAR
+============================================================ -->
+
+<nav class="navbar">
+
+
+    <div class="nav-logo">
+
+        <span class="nav-logo-icon">
+            🅿️
+        </span>
+
+        <span>
+            Smart Parking
+        </span>
+
+    </div>
+
+
+    <div class="nav-links">
+
+
+        <a
+            class="nav-link active"
+            onclick="showPage('dashboard', this)"
+        >
+
+            <span class="nav-icon">
+                🏠
+            </span>
+
+            <span class="nav-link-text">
+                Dashboard
+            </span>
+
+        </a>
+
+
+        <a
+            class="nav-link"
+            onclick="showPage('slots', this)"
+        >
+
+            <span class="nav-icon">
+                🅿️
+            </span>
+
+            <span class="nav-link-text">
+                Parking Slots
+            </span>
+
+        </a>
+
+
+        <a
+            class="nav-link"
+            onclick="showPage('sessions', this)"
+        >
+
+            <span class="nav-icon">
+                💳
+            </span>
+
+            <span class="nav-link-text">
+                Sessions
+            </span>
+
+        </a>
+
+
+        <a
+            class="nav-link"
+            onclick="showPage('history', this)"
+        >
+
+            <span class="nav-icon">
+                📋
+            </span>
+
+            <span class="nav-link-text">
+                History
+            </span>
+
+        </a>
+
+
+        <a
+            class="nav-link"
+            onclick="showPage('system', this)"
+        >
+
+            <span class="nav-icon">
+                ⚙️
+            </span>
+
+            <span class="nav-link-text">
+                System Info
+            </span>
+
+        </a>
+
+
+    </div>
+
+
+    <div class="nav-admin">
+
+        ADMIN PANEL
+
+    </div>
+
+
+</nav>
+
+
+
+<main class="main">
+
+
+    <!-- ============================================================
+         DASHBOARD
+    ============================================================ -->
+
+    <section
+        id="dashboard"
+        class="page-section active-page"
+    >
+
+
+        <div class="page-header">
+
+            <h1>
+                🚗 Smart Parking
+            </h1>
+
+            <p>
+                IoT-Based Parking Slot Occupancy Monitoring System
+            </p>
+
+        </div>
+
+
+        <!-- SYSTEM STATUS -->
+
+        <div class="system-status">
+
+
+            <div class="status-box">
+
+                <div class="status-dot"></div>
+
+                <div class="status-text">
+
+                    <strong>
+                        ESP32 ONLINE
+                    </strong>
+
+                    <span>
+                        Controller connected
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <div class="status-dot"></div>
+
+                <div class="status-text">
+
+                    <strong>
+                        3 SENSORS ACTIVE
+                    </strong>
+
+                    <span>
+                        HC-SR04 sensors
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <div class="status-dot"></div>
+
+                <div class="status-text">
+
+                    <strong>
+                        USB SERIAL
+                    </strong>
+
+                    <span>
+                        ESP32 communication
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <div class="status-dot"></div>
+
+                <div class="status-text">
+
+                    <strong>
+                        SYSTEM RUNNING
+                    </strong>
+
+                    <span>
+                        Live monitoring active
+                    </span>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- SUMMARY -->
+
+        <div class="summary-grid">
+
+
+            <div class="summary-card total">
+
+                <div class="summary-title">
+                    Total Parking Slots
+                </div>
+
+                <div
+                    class="summary-value"
+                    id="total"
+                >
+                    3
+                </div>
+
+            </div>
+
+
+            <div class="summary-card occupied">
+
+                <div class="summary-title">
+                    Occupied Slots
+                </div>
+
+                <div
+                    class="summary-value"
+                    id="occupiedCount"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="summary-card available">
+
+                <div class="summary-title">
+                    Available Slots
+                </div>
+
+                <div
+                    class="summary-value"
+                    id="available"
+                >
+                    3
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- FULL MESSAGE -->
+
+        <div
+            id="fullMessage"
+            class="full-message"
+        >
+
+            ⚠️ PARKING FULL —
+            ALL PARKING SLOTS ARE OCCUPIED
+
+        </div>
+
+
+        <!-- STATISTICS -->
+
+        <div class="section">
+
+
+            <div class="section-title">
+                📊 Parking Statistics
+            </div>
+
+            <div class="section-subtitle">
+                Real-time parking and billing statistics
+            </div>
+
+
+            <div class="statistics-grid">
+
+
+                <div class="stat-box">
+
+                    <div class="stat-icon">
+                        📊
+                    </div>
+
+                    <span>
+                        Today's Parking Events
+                    </span>
+
+                    <strong id="totalEvents">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-box">
+
+                    <div class="stat-icon">
+                        🚗
+                    </div>
+
+                    <span>
+                        Currently Occupied
+                    </span>
+
+                    <strong id="statOccupied">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-box">
+
+                    <div class="stat-icon">
+                        🅿️
+                    </div>
+
+                    <span>
+                        Currently Available
+                    </span>
+
+                    <strong id="statAvailable">
+                        3
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-box">
+
+                    <div class="stat-icon">
+                        🕒
+                    </div>
+
+                    <span>
+                        Last Session Update
+                    </span>
+
+                    <strong
+                        id="lastUpdate"
+                        style="font-size:15px;"
+                    >
+                        No events yet
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ============================================================
+         PARKING SLOTS
+    ============================================================ -->
+
+    <section
+        id="slots"
+        class="page-section"
+    >
+
+
+        <div class="section">
+
+
+            <div class="section-title">
+                🅿️ Parking Slot Status
+            </div>
+
+            <div class="section-subtitle">
+                Live parking occupancy monitoring
+            </div>
+
+
+            <div class="slots-grid">
+
+
+                <!-- SLOT 1 -->
+
+                <div
+                    id="slot1"
+                    class="slot-card"
+                >
+
+                    <div class="slot-name">
+                        SLOT 1
+                    </div>
+
+                    <div
+                        id="vehicle1"
+                        class="vehicle-area"
+                    >
+
+                        <div class="empty">
+                            P
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="status1"
+                        class="slot-status green"
+                    >
+                        EMPTY
+                    </div>
+
+                </div>
+
+
+                <!-- SLOT 2 -->
+
+                <div
+                    id="slot2"
+                    class="slot-card"
+                >
+
+                    <div class="slot-name">
+                        SLOT 2
+                    </div>
+
+                    <div
+                        id="vehicle2"
+                        class="vehicle-area"
+                    >
+
+                        <div class="empty">
+                            P
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="status2"
+                        class="slot-status green"
+                    >
+                        EMPTY
+                    </div>
+
+                </div>
+
+
+                <!-- SLOT 3 -->
+
+                <div
+                    id="slot3"
+                    class="slot-card"
+                >
+
+                    <div class="slot-name">
+                        SLOT 3
+                    </div>
+
+                    <div
+                        id="vehicle3"
+                        class="vehicle-area"
+                    >
+
+                        <div class="empty">
+                            P
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="status3"
+                        class="slot-status green"
+                    >
+                        EMPTY
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- HARDWARE -->
+
+        <div class="section">
+
+
+            <div class="section-title">
+                🔧 Hardware Status
+            </div>
+
+            <div class="section-subtitle">
+                Current ESP32 and gate status
+            </div>
+
+
+            <div class="hardware-grid">
+
+
+                <div class="hardware-card">
+
+                    <div
+                        id="greenLed"
+                        class="hardware-icon"
+                    >
+                        🟢
+                    </div>
+
+                    <h3>
+                        Green Indicator
+                    </h3>
+
+                    <p id="greenText">
+                        At least one parking slot is available
+                    </p>
+
+                </div>
+
+
+                <div class="hardware-card">
+
+                    <div
+                        id="redLed"
+                        class="hardware-icon"
+                    >
+                        🔴
+                    </div>
+
+                    <h3>
+                        Red Indicator
+                    </h3>
+
+                    <p id="redText">
+                        Parking is not full
+                    </p>
+
+                </div>
+
+
+                <div class="hardware-card">
+
+                    <div
+                        id="gateIcon"
+                        class="hardware-icon"
+                    >
+                        🚪
+                    </div>
+
+                    <h3>
+                        Parking Gate
+                    </h3>
+
+                    <p id="gateStatus">
+                        Gate OPEN — Servo 90°
+                    </p>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ============================================================
+         SESSIONS & BILLING
+    ============================================================ -->
+
+    <section
+        id="sessions"
+        class="page-section"
+    >
+
+
+        <div class="section">
+
+
+            <div class="section-title">
+                💳 Parking Sessions & Billing
+            </div>
+
+            <div class="section-subtitle">
+                Vehicle entry, exit, duration,
+                billing and payment information
+            </div>
+
+
+            <div class="table-container">
+
+
+                <table>
+
+
+                    <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Slot</th>
+
+                        <th>Entry Time</th>
+
+                        <th>Exit Time</th>
+
+                        <th>Duration</th>
+
+                        <th>Amount</th>
+
+                        <th>Payment</th>
+
+                        <th>Transaction ID</th>
+
+                        <th>Payment Time</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+
+                    <tbody id="sessionsTable">
+
+                    <tr>
+
+                        <td
+                            colspan="10"
+                            class="history-empty"
+                        >
+                            Loading parking sessions...
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+            <!-- PAYMENT SUMMARY -->
+
+            <div class="payment-summary">
+
+
+                <div class="payment-box">
+
+                    <div class="payment-box-title">
+                        Completed Sessions
+                    </div>
+
+                    <div
+                        class="payment-box-value"
+                        id="completedSessions"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="payment-box">
+
+                    <div class="payment-box-title">
+                        Pending Payments
+                    </div>
+
+                    <div
+                        class="payment-box-value"
+                        id="pendingPayments"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="payment-box">
+
+                    <div class="payment-box-title">
+                        Total Revenue
+                    </div>
+
+                    <div
+                        class="payment-box-value"
+                        id="totalRevenue"
+                    >
+                        ₹0.00
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ============================================================
+         HISTORY
+    ============================================================ -->
+
+    <section
+        id="history"
+        class="page-section"
+    >
+
+
+        <div class="section">
+
+
+            <div class="section-title">
+                📋 Parking Status History
+            </div>
+
+            <div class="section-subtitle">
+                Historical parking slot occupancy records
+            </div>
+
+
+            <div class="table-container">
+
+
+                <table>
+
+
+                    <thead>
+
+                    <tr>
+
+                        <th>
+                            Time
+                        </th>
+
+                        <th>
+                            Slot 1
+                        </th>
+
+                        <th>
+                            Slot 2
+                        </th>
+
+                        <th>
+                            Slot 3
+                        </th>
+
+                    </tr>
+
+                    </thead>
+
+
+                    <tbody id="historyBody">
+
+                    <tr>
+
+                        <td
+                            colspan="4"
+                            class="history-empty"
+                        >
+                            Loading parking history...
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ============================================================
+         SYSTEM INFORMATION
+    ============================================================ -->
+
+    <section
+        id="system"
+        class="page-section"
+    >
+
+
+        <div class="section">
+
+
+            <div class="section-title">
+                ⚙️ System Information
+            </div>
+
+            <div class="section-subtitle">
+                Hardware, communication and parking configuration
+            </div>
+
+
+            <div class="info-grid">
+
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Controller
+                    </div>
+
+                    <div class="info-value">
+                        ESP32
+                    </div>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Sensors
+                    </div>
+
+                    <div class="info-value">
+                        3 × HC-SR04
+                    </div>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Communication
+                    </div>
+
+                    <div class="info-value">
+                        USB Serial
+                    </div>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Capacity
+                    </div>
+
+                    <div class="info-value">
+                        3 Vehicles
+                    </div>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Detection Rule
+                    </div>
+
+                    <div class="info-value">
+                        &lt; 10 cm = Occupied
+                    </div>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <div class="info-label">
+                        Parking Rate
+                    </div>
+
+                    <div class="info-value">
+                        ₹20 First Hour +
+                        ₹10/Additional Hour
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+
+<footer>
+
+    Smart Parking Management System
+    • IoT Prototype
+
+</footer>
+
+
+
+<script>
+
+
+    /* ============================================================
+       NAVBAR PAGE SWITCHING
+    ============================================================ */
+
+    function showPage(
+        pageId,
+        clickedLink
+    ) {
+
+
+        const pages =
+            document.querySelectorAll(
+                ".page-section"
+            );
+
+
+        pages.forEach(
+            page => {
+
+                page.classList.remove(
+                    "active-page"
+                );
+
+            }
+        );
+
+
+        const selectedPage =
+            document.getElementById(
+                pageId
+            );
+
+
+        if (selectedPage) {
+
+            selectedPage.classList.add(
+                "active-page"
+            );
+
+        }
+
+
+        const links =
+            document.querySelectorAll(
+                ".nav-link"
+            );
+
+
+        links.forEach(
+            link => {
+
+                link.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+        if (clickedLink) {
+
+            clickedLink.classList.add(
+                "active"
+            );
+
+        }
+
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+    }
+
+
+
+    /* ============================================================
+       CURRENT PARKING STATUS
+    ============================================================ */
+
+    async function updateParkingStatus() {
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/status",
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Status request failed"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            const slot1 =
+                data.slot1 || "EMPTY";
+
+
+            const slot2 =
+                data.slot2 || "EMPTY";
+
+
+            const slot3 =
+                data.slot3 || "EMPTY";
+
+
+            updateSlot(
+                "slot1",
+                "status1",
+                "vehicle1",
+                slot1
+            );
+
+
+            updateSlot(
+                "slot2",
+                "status2",
+                "vehicle2",
+                slot2
+            );
+
+
+            updateSlot(
+                "slot3",
+                "status3",
+                "vehicle3",
+                slot3
+            );
+
+
+            const statuses = [
+
+                slot1,
+                slot2,
+                slot3
+
+            ];
+
+
+            const occupied =
+                statuses.filter(
+                    status =>
+                        status === "OCCUPIED"
+                ).length;
+
+
+            const available =
+                3 - occupied;
+
+
+            document.getElementById(
+                "total"
+            ).textContent = "3";
+
+
+            document.getElementById(
+                "occupiedCount"
+            ).textContent =
+                occupied;
+
+
+            document.getElementById(
+                "available"
+            ).textContent =
+                available;
+
+
+            document.getElementById(
+                "statOccupied"
+            ).textContent =
+                occupied;
+
+
+            document.getElementById(
+                "statAvailable"
+            ).textContent =
+                available;
+
+
+            /* PARKING FULL */
+
+            const fullMessage =
+                document.getElementById(
+                    "fullMessage"
+                );
+
+
+            if (
+                occupied === 3
+            ) {
+
+                fullMessage.classList.add(
+                    "show"
+                );
+
+            } else {
+
+                fullMessage.classList.remove(
+                    "show"
+                );
+
+            }
+
+
+            /* HARDWARE */
+
+            const greenText =
+                document.getElementById(
+                    "greenText"
+                );
+
+
+            const redText =
+                document.getElementById(
+                    "redText"
+                );
+
+
+            const gateIcon =
+                document.getElementById(
+                    "gateIcon"
+                );
+
+
+            const gateStatus =
+                document.getElementById(
+                    "gateStatus"
+                );
+
+
+            if (
+                occupied === 3
+            ) {
+
+
+                greenText.textContent =
+                    "Parking is full";
+
+
+                redText.textContent =
+                    "All parking slots are occupied";
+
+
+                gateIcon.textContent =
+                    "🔒";
+
+
+                gateStatus.textContent =
+                    "Gate CLOSED — Servo 0°";
+
+
+            } else {
+
+
+                greenText.textContent =
+                    "At least one parking slot is available";
+
+
+                redText.textContent =
+                    "Parking is not full";
+
+
+                gateIcon.textContent =
+                    "🚪";
+
+
+                gateStatus.textContent =
+                    "Gate OPEN — Servo 90°";
+
+            }
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "Backend connection error:",
+                error
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       UPDATE SLOT
+    ============================================================ */
+
+    function updateSlot(
+        slotId,
+        statusId,
+        vehicleId,
+        status
+    ) {
+
+
+        const slot =
+            document.getElementById(
+                slotId
+            );
+
+
+        const statusElement =
+            document.getElementById(
+                statusId
+            );
+
+
+        const vehicleArea =
+            document.getElementById(
+                vehicleId
+            );
+
+
+        if (
+            !slot ||
+            !statusElement ||
+            !vehicleArea
+        ) {
+
+            return;
+
+        }
+
+
+        statusElement.textContent =
+            status;
+
+
+        if (
+            status === "OCCUPIED"
+        ) {
+
+
+            slot.classList.add(
+                "occupied"
+            );
+
+
+            vehicleArea.innerHTML =
+                '<div class="car">🚗</div>';
+
+
+            statusElement.className =
+                "slot-status red";
+
+
+        } else {
+
+
+            slot.classList.remove(
+                "occupied"
+            );
+
+
+            vehicleArea.innerHTML =
+                '<div class="empty">P</div>';
+
+
+            statusElement.className =
+                "slot-status green";
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       STATISTICS
+    ============================================================ */
+
+    async function loadStatistics() {
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/statistics",
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Statistics request failed"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            document.getElementById(
+                "totalEvents"
+            ).textContent =
+                data.total_events ?? 0;
+
+
+            document.getElementById(
+                "statOccupied"
+            ).textContent =
+                data.occupied_slots ?? 0;
+
+
+            document.getElementById(
+                "statAvailable"
+            ).textContent =
+                data.available_slots ?? 3;
+
+
+            document.getElementById(
+                "completedSessions"
+            ).textContent =
+                data.paid_sessions ??
+                data.completed_sessions ??
+                0;
+
+
+            document.getElementById(
+                "pendingPayments"
+            ).textContent =
+                data.pending_payments ?? 0;
+
+
+            document.getElementById(
+                "totalRevenue"
+            ).textContent =
+                "₹" +
+                Number(
+                    data.total_revenue ?? 0
+                ).toFixed(2);
+
+
+            document.getElementById(
+                "lastUpdate"
+            ).textContent =
+                data.last_update ??
+                "--";
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "Statistics Error:",
+                error
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       PARKING SESSIONS
+    ============================================================ */
+
+    async function loadParkingSessions() {
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/sessions",
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Sessions request failed"
+                );
+
+            }
+
+
+            const records =
+                await response.json();
+
+
+            const table =
+                document.getElementById(
+                    "sessionsTable"
+                );
+
+
+            table.innerHTML = "";
+
+
+            if (
+                records.length === 0
+            ) {
+
+
+                table.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="10"
+                            class="history-empty">
+
+                            No parking sessions available.
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+
+                return;
+
+            }
+
+
+            records.forEach(
+                session => {
+
+
+                    const row =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    const entry =
+                        session.entry_time ||
+                        "--";
+
+
+                    const exit =
+                        session.exit_time ||
+                        "ACTIVE";
+
+
+                    const duration =
+                        formatDuration(
+                            session.duration_seconds
+                        );
+
+
+                    const amount =
+                        session.amount !== null &&
+                        session.amount !== undefined
+
+                        ?
+
+                        "₹" +
+                        Number(
+                            session.amount
+                        ).toFixed(2)
+
+                        :
+
+                        "--";
+
+
+                    const paymentStatus =
+                        String(
+                            session.payment_status ||
+                            "PENDING"
+                        ).toUpperCase();
+
+
+                    let paymentHTML;
+
+
+                    if (
+                        paymentStatus ===
+                        "PAID"
+                    ) {
+
+
+                        if (
+                            session.transaction_id ===
+                            "CASH"
+                        ) {
+
+
+                            paymentHTML = `
+
+                                <span class="cash-paid">
+
+                                    ✓ PAID - CASH
+
+                                </span>
+
+                            `;
+
+                        } else {
+
+
+                            paymentHTML = `
+
+                                <span class="payment-paid">
+
+                                    ✓ PAID
+
+                                </span>
+
+                            `;
+
+                        }
+
+
+                    } else {
+
+
+                        paymentHTML = `
+
+                            <span class="payment-pending">
+
+                                PENDING
+
+                            </span>
+
+                        `;
+
+                    }
+
+
+                    let actionHTML;
+
+
+                    if (
+                        paymentStatus ===
+                        "PAID"
+                    ) {
+
+
+                        actionHTML = `
+
+                            <span class="cash-paid">
+
+                                ✓ Paid
+
+                            </span>
+
+                        `;
+
+
+                    } else if (
+                        session.exit_time &&
+                        session.amount !== null &&
+                        Number(session.amount) > 0
+                    ) {
+
+
+                        actionHTML = `
+
+                            <button
+                                class="cash-btn"
+                                onclick="cashPayment(${session.id})">
+
+                                💵 CASH PAYMENT
+
+                            </button>
+
+                        `;
+
+
+                    } else {
+
+
+                        actionHTML = `
+
+                            <span style="color:#7183a5;">
+
+                                Active
+
+                            </span>
+
+                        `;
+
+                    }
+
+
+                    row.innerHTML = `
+
+                        <td>
+                            ${session.id ?? "--"}
+                        </td>
+
+                        <td>
+                            ${session.slot ?? "--"}
+                        </td>
+
+                        <td>
+                            ${entry}
+                        </td>
+
+                        <td>
+                            ${exit}
+                        </td>
+
+                        <td>
+                            ${duration}
+                        </td>
+
+                        <td>
+                            ${amount}
+                        </td>
+
+                        <td>
+                            ${paymentHTML}
+                        </td>
+
+                        <td>
+                            ${session.transaction_id || "--"}
+                        </td>
+
+                        <td>
+                            ${session.payment_time || "--"}
+                        </td>
+
+                        <td>
+                            ${actionHTML}
+                        </td>
+
+                    `;
+
+
+                    table.appendChild(
+                        row
+                    );
+
+                }
+            );
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "Sessions Error:",
+                error
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       CASH PAYMENT
+    ============================================================ */
+
+    async function cashPayment(
+        sessionId
+    ) {
+
+
+        const confirmed =
+            confirm(
+                "Confirm cash payment received for this parking session?"
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/cash-payment",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                session_id:
+                                    sessionId
+
+                            })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+
+                console.error(
+                    "Cash Payment Error:",
+                    data
+                );
+
+
+                alert(
+                    data.error ||
+                    "Unable to record cash payment."
+                );
+
+
+                return;
+
+            }
+
+
+            alert(
+                "Cash payment recorded successfully."
+            );
+
+
+            await loadParkingSessions();
+
+            await loadStatistics();
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "Cash Payment Error:",
+                error
+            );
+
+
+            alert(
+                "Unable to record cash payment."
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       DURATION
+    ============================================================ */
+
+    function formatDuration(
+        seconds
+    ) {
+
+
+        if (
+            seconds === null ||
+            seconds === undefined ||
+            seconds === ""
+        ) {
+
+            return "--";
+
+        }
+
+
+        seconds =
+            Number(seconds);
+
+
+        if (
+            isNaN(seconds)
+        ) {
+
+            return "--";
+
+        }
+
+
+        const hours =
+            Math.floor(
+                seconds / 3600
+            );
+
+
+        const minutes =
+            Math.floor(
+                (seconds % 3600) / 60
+            );
+
+
+        const secs =
+            Math.floor(
+                seconds % 60
+            );
+
+
+        return (
+
+            String(hours)
+                .padStart(2, "0")
+
+            +
+
+            ":"
+
+            +
+
+            String(minutes)
+                .padStart(2, "0")
+
+            +
+
+            ":"
+
+            +
+
+            String(secs)
+                .padStart(2, "0")
+
+        );
+
+    }
+
+
+
+    /* ============================================================
+       PARKING HISTORY
+    ============================================================ */
+
+    async function loadParkingHistory() {
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/history",
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "History request failed"
+                );
+
+            }
+
+
+            const records =
+                await response.json();
+
+
+            const historyBody =
+                document.getElementById(
+                    "historyBody"
+                );
+
+
+            historyBody.innerHTML = "";
+
+
+            if (
+                records.length === 0
+            ) {
+
+
+                historyBody.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="4"
+                            class="history-empty">
+
+                            No parking history available.
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+
+                return;
+
+            }
+
+
+            records.forEach(
+                record => {
+
+
+                    const row =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    row.innerHTML = `
+
+                        <td>
+                            ${record.timestamp}
+                        </td>
+
+
+                        <td class="${
+                            record.slot1 ===
+                            "OCCUPIED"
+
+                                ?
+
+                            "history-occupied"
+
+                                :
+
+                            "history-available"
+                        }">
+
+                            ${record.slot1}
+
+                        </td>
+
+
+                        <td class="${
+                            record.slot2 ===
+                            "OCCUPIED"
+
+                                ?
+
+                            "history-occupied"
+
+                                :
+
+                            "history-available"
+                        }">
+
+                            ${record.slot2}
+
+                        </td>
+
+
+                        <td class="${
+                            record.slot3 ===
+                            "OCCUPIED"
+
+                                ?
+
+                            "history-occupied"
+
+                                :
+
+                            "history-available"
+                        }">
+
+                            ${record.slot3}
+
+                        </td>
+
+                    `;
+
+
+                    historyBody.appendChild(
+                        row
+                    );
+
+                }
+            );
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "History Error:",
+                error
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       2 SECOND REFRESH
+    ============================================================ */
+
+    setInterval(
+        updateParkingStatus,
+        2000
+    );
+
+
+    setInterval(
+        loadStatistics,
+        2000
+    );
+
+
+    setInterval(
+        loadParkingSessions,
+        2000
+    );
+
+
+    setInterval(
+        loadParkingHistory,
+        2000
+    );
+
+
+
+    /* ============================================================
+       INITIAL LOAD
+    ============================================================ */
+
+    updateParkingStatus();
+
+    loadStatistics();
+
+    loadParkingSessions();
+
+    loadParkingHistory();
+
+
+</script>
+
+
+</body>
+</html>
