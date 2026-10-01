@@ -1036,6 +1036,56 @@
 
 
         /* ============================================================
+           RESERVED PARKING
+        ============================================================ */
+
+        .reservation-status {
+
+            display: inline-block;
+
+            padding: 5px 9px;
+
+            border-radius: 12px;
+
+            font-size: 11px;
+
+            font-weight: bold;
+
+            background: #1e3a8a;
+
+            color: #bfdbfe;
+
+        }
+
+
+        .reservation-active {
+
+            background: #166534;
+
+            color: #bbf7d0;
+
+        }
+
+
+        .reservation-completed {
+
+            background: #334155;
+
+            color: #cbd5e1;
+
+        }
+
+
+        .reservation-cancelled {
+
+            background: #7f1d1d;
+
+            color: #fecaca;
+
+        }
+
+
+        /* ============================================================
            INFORMATION
         ============================================================ */
 
@@ -1302,6 +1352,22 @@
 
             <span class="nav-link-text">
                 Sessions
+            </span>
+
+        </a>
+
+
+        <a
+            class="nav-link"
+            onclick="showPage('reservations', this)"
+        >
+
+            <span class="nav-icon">
+                📅
+            </span>
+
+            <span class="nav-link-text">
+                Reserved Parking
             </span>
 
         </a>
@@ -1975,6 +2041,102 @@
                     </div>
 
                 </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ============================================================
+         RESERVED PARKING
+    ============================================================ -->
+
+    <section
+        id="reservations"
+        class="page-section"
+    >
+
+
+        <div class="section">
+
+
+            <div class="section-title">
+                📅 Reserved Parking
+            </div>
+
+            <div class="section-subtitle">
+                User reservations, parking activity and payment information
+            </div>
+
+
+            <div class="table-container">
+
+
+                <table>
+
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Reservation ID</th>
+
+                        <th>User</th>
+
+                        <th>Slot</th>
+
+                        <th>Reservation Start</th>
+
+                        <th>Reservation End</th>
+
+                        <th>Status</th>
+
+                        <th>Actual Entry</th>
+
+                        <th>Actual Exit</th>
+
+                        <th>Duration</th>
+
+                        <th>Charge</th>
+
+                        <th>Payment</th>
+
+                        <th>Method</th>
+
+                        <th>Transaction ID</th>
+
+                        <th>Payment Time</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+
+                    <tbody id="reservationsTable">
+
+                    <tr>
+
+                        <td
+                            colspan="15"
+                            class="history-empty"
+                        >
+                            Loading reservations...
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+
+                </table>
 
 
             </div>
@@ -3149,6 +3311,485 @@
 
 
     /* ============================================================
+       RESERVED PARKING
+    ============================================================ */
+
+    async function loadReservations() {
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/reservations",
+                    {
+                        cache: "no-store"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Reservations request failed"
+                );
+
+            }
+
+
+            const records =
+                await response.json();
+
+
+            const table =
+                document.getElementById(
+                    "reservationsTable"
+                );
+
+
+            if (!table) {
+
+                return;
+
+            }
+
+
+            table.innerHTML = "";
+
+
+            if (
+                !records ||
+                records.length === 0
+            ) {
+
+
+                table.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="15"
+                            class="history-empty">
+
+                            No reservations available.
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+
+                return;
+
+            }
+
+
+            records.forEach(
+                reservation => {
+
+
+                    const row =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    const status =
+                        String(
+                            reservation.status ||
+                            "RESERVED"
+                        ).toUpperCase();
+
+
+                    let statusClass =
+                        "reservation-status";
+
+
+                    if (
+                        status === "ACTIVE"
+                    ) {
+
+                        statusClass +=
+                            " reservation-active";
+
+                    }
+                    else if (
+                        status === "COMPLETED"
+                    ) {
+
+                        statusClass +=
+                            " reservation-completed";
+
+                    }
+                    else if (
+                        status === "CANCELLED"
+                    ) {
+
+                        statusClass +=
+                            " reservation-cancelled";
+
+                    }
+
+
+                    const paymentStatus =
+                        String(
+                            reservation.payment_status ||
+                            "PENDING"
+                        ).toUpperCase();
+
+
+                    let paymentHTML;
+
+
+                    if (
+                        paymentStatus === "PAID"
+                    ) {
+
+
+                        if (
+                            String(
+                                reservation.payment_method ||
+                                ""
+                            ).toUpperCase()
+                            === "CASH"
+                            ||
+                            reservation.transaction_id ===
+                            "CASH"
+                        ) {
+
+
+                            paymentHTML = `
+
+                                <span class="cash-paid">
+
+                                    ✓ PAID - CASH
+
+                                </span>
+
+                            `;
+
+                        }
+                        else {
+
+
+                            paymentHTML = `
+
+                                <span class="payment-paid">
+
+                                    ✓ PAID
+
+                                </span>
+
+                            `;
+
+                        }
+
+
+                    }
+                    else {
+
+
+                        paymentHTML = `
+
+                            <span class="payment-pending">
+
+                                PENDING
+
+                            </span>
+
+                        `;
+
+                    }
+
+
+                    let actionHTML;
+
+
+                    if (
+                        paymentStatus === "PAID"
+                    ) {
+
+
+                        actionHTML = `
+
+                            <span class="cash-paid">
+
+                                ✓ Paid
+
+                            </span>
+
+                        `;
+
+
+                    }
+                    else if (
+                        reservation.exit_time &&
+                        reservation.amount !== null &&
+                        Number(reservation.amount) > 0
+                    ) {
+
+
+                        actionHTML = `
+
+                            <button
+                                class="cash-btn"
+                                onclick="reservationCashPayment(${reservation.id})">
+
+                                💵 CASH PAYMENT
+
+                            </button>
+
+                        `;
+
+
+                    }
+                    else if (
+                        !reservation.exit_time
+                    ) {
+
+
+                        actionHTML = `
+
+                            <span style="color:#7183a5;">
+
+                                Waiting for Exit
+
+                            </span>
+
+                        `;
+
+
+                    }
+                    else {
+
+
+                        actionHTML = `
+
+                            <span style="color:#7183a5;">
+
+                                --
+
+                            </span>
+
+                        `;
+
+                    }
+
+
+                    row.innerHTML = `
+
+                        <td>
+                            ${reservation.id ?? "--"}
+                        </td>
+
+                        <td>
+                            ${reservation.user_name ?? "--"}
+                        </td>
+
+                        <td>
+                            ${reservation.slot ?? "--"}
+                        </td>
+
+                        <td>
+                            ${reservation.reservation_start ?? "--"}
+                        </td>
+
+                        <td>
+                            ${reservation.reservation_end ?? "--"}
+                        </td>
+
+                        <td>
+
+                            <span
+                                class="${statusClass}"
+                            >
+
+                                ${status}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+                            ${reservation.entry_time ?? "--"}
+                        </td>
+
+                        <td>
+                            ${reservation.exit_time ?? "--"}
+                        </td>
+
+                        <td>
+                            ${formatDuration(
+                                reservation.duration_seconds
+                            )}
+                        </td>
+
+                        <td>
+
+                            ${
+                                reservation.amount !== null &&
+                                reservation.amount !== undefined
+
+                                ?
+
+                                "₹" +
+                                Number(
+                                    reservation.amount
+                                ).toFixed(2)
+
+                                :
+
+                                "--"
+                            }
+
+                        </td>
+
+                        <td>
+                            ${paymentHTML}
+                        </td>
+
+                        <td>
+                            ${reservation.payment_method ?? "--"}
+                        </td>
+
+                        <td>
+                            ${reservation.transaction_id ?? "--"}
+                        </td>
+
+                        <td>
+                            ${reservation.payment_time ?? "--"}
+                        </td>
+
+                        <td>
+                            ${actionHTML}
+                        </td>
+
+                    `;
+
+
+                    table.appendChild(
+                        row
+                    );
+
+                }
+            );
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "Reservations Error:",
+                error
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       RESERVATION CASH PAYMENT
+    ============================================================ */
+
+    async function reservationCashPayment(
+        reservationId
+    ) {
+
+
+        const confirmed =
+            confirm(
+                "Confirm cash payment received for this reservation?"
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/reservation-cash-payment",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                reservation_id:
+                                    reservationId
+
+                            })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+
+                alert(
+                    data.message ||
+                    "Unable to record reservation cash payment."
+                );
+
+
+                return;
+
+            }
+
+
+            alert(
+                "Reservation cash payment recorded successfully."
+            );
+
+
+            await loadReservations();
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "Reservation Cash Payment Error:",
+                error
+            );
+
+
+            alert(
+                "Unable to record reservation cash payment."
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
        PARKING HISTORY
     ============================================================ */
 
@@ -3335,6 +3976,12 @@
 
 
     setInterval(
+        loadReservations,
+        2000
+    );
+
+
+    setInterval(
         loadParkingHistory,
         2000
     );
@@ -3352,6 +3999,8 @@
     loadParkingSessions();
 
     loadParkingHistory();
+
+    loadReservations();
 
 
 </script>
