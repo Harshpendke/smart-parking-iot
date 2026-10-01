@@ -651,6 +651,27 @@
         }
 
 
+        .slot-card.reserved {
+
+            border-color: #facc15;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #1f1c14,
+                    #171827
+                );
+
+        }
+
+
+        .slot-status.yellow {
+
+            color: #facc15;
+
+        }
+
+
         .slot-name {
 
             font-size: 18px;
@@ -2439,16 +2460,16 @@
         try {
 
 
-            const response =
+            const statusResponse =
                 await fetch(
-                    "/status",
+                    "/status?time=" + Date.now(),
                     {
                         cache: "no-store"
                     }
                 );
 
 
-            if (!response.ok) {
+            if (!statusResponse.ok) {
 
                 throw new Error(
                     "Status request failed"
@@ -2458,19 +2479,68 @@
 
 
             const data =
-                await response.json();
+                await statusResponse.json();
+
+
+            let reservations = [];
+
+
+            try {
+
+                const reservationResponse =
+                    await fetch(
+                        "/reservations?time=" + Date.now(),
+                        {
+                            cache: "no-store"
+                        }
+                    );
+
+
+                if (reservationResponse.ok) {
+
+                    const reservationData =
+                        await reservationResponse.json();
+
+                    reservations =
+                        Array.isArray(reservationData)
+                            ? reservationData
+                            : [];
+
+                }
+
+            }
+            catch (reservationError) {
+
+                console.error(
+                    "Reservation status error:",
+                    reservationError
+                );
+
+            }
 
 
             const slot1 =
-                data.slot1 || "EMPTY";
+                getAdminSlotDisplay(
+                    1,
+                    data.slot1 || "EMPTY",
+                    reservations
+                );
 
 
             const slot2 =
-                data.slot2 || "EMPTY";
+                getAdminSlotDisplay(
+                    2,
+                    data.slot2 || "EMPTY",
+                    reservations
+                );
 
 
             const slot3 =
-                data.slot3 || "EMPTY";
+                getAdminSlotDisplay(
+                    3,
+                    data.slot3 || "EMPTY",
+                    reservations
+                );
 
 
             updateSlot(
@@ -2651,6 +2721,160 @@
 
 
     /* ============================================================
+       ADMIN SLOT STATUS WITH RESERVATIONS
+    ============================================================ */
+
+    function getAdminSlotDisplay(
+        slotNumber,
+        physicalStatus,
+        reservations
+    ) {
+
+
+        const sensorValue =
+            String(
+                physicalStatus || ""
+            ).toUpperCase();
+
+
+        const occupied =
+            sensorValue.includes(
+                "OCCUPIED"
+            )
+            &&
+            !sensorValue.includes(
+                "NO READING"
+            );
+
+
+        if (occupied) {
+
+            return "OCCUPIED";
+
+        }
+
+
+        const now =
+            new Date();
+
+
+        const activeReservation =
+            reservations.find(
+                reservation => {
+
+
+                    const reservationSlot =
+                        String(
+                            reservation.slot || ""
+                        )
+                        .replace(
+                            "slot",
+                            ""
+                        )
+                        .trim();
+
+
+                    if (
+                        reservationSlot !==
+                        String(slotNumber)
+                    ) {
+
+                        return false;
+
+                    }
+
+
+                    const status =
+                        String(
+                            reservation.status || ""
+                        )
+                        .trim()
+                        .toUpperCase();
+
+
+                    if (
+                        status !== "RESERVED"
+                        &&
+                        status !== "OCCUPIED"
+                    ) {
+
+                        return false;
+
+                    }
+
+
+                    const startText =
+                        String(
+                            reservation.reservation_start || ""
+                        ).trim();
+
+
+                    const endText =
+                        String(
+                            reservation.reservation_end || ""
+                        ).trim();
+
+
+                    const start =
+                        new Date(
+                            startText.replace(
+                                " ",
+                                "T"
+                            )
+                        );
+
+
+                    const end =
+                        new Date(
+                            endText.replace(
+                                " ",
+                                "T"
+                            )
+                        );
+
+
+                    if (
+                        isNaN(
+                            start.getTime()
+                        )
+                        ||
+                        isNaN(
+                            end.getTime()
+                        )
+                    ) {
+
+                        return true;
+
+                    }
+
+
+                    return (
+                        now >= start
+                        &&
+                        now < end
+                    );
+
+                }
+            );
+
+
+        if (activeReservation) {
+
+            return "RESERVED";
+
+        }
+
+
+        return "EMPTY";
+
+    }
+
+
+
+
+
+
+    /* ============================================================
        UPDATE SLOT
     ============================================================ */
 
@@ -2695,6 +2919,12 @@
             status;
 
 
+        slot.classList.remove(
+            "occupied",
+            "reserved"
+        );
+
+
         if (
             status === "OCCUPIED"
         ) {
@@ -2713,12 +2943,29 @@
                 "slot-status red";
 
 
-        } else {
+        } else if (
+            status === "RESERVED"
+        ) {
 
 
-            slot.classList.remove(
-                "occupied"
+            slot.classList.add(
+                "reserved"
             );
+
+
+            vehicleArea.innerHTML =
+                '<div class="car">🎫</div>';
+
+
+            statusElement.className =
+                "slot-status yellow";
+
+
+            statusElement.textContent =
+                "RESERVED";
+
+
+        } else {
 
 
             vehicleArea.innerHTML =
@@ -3546,6 +3793,32 @@
 
                     }
                     else if (
+                        (
+                            status === "RESERVED"
+                            ||
+                            status === "OCCUPIED"
+                        )
+                        &&
+                        !reservation.exit_time
+                    ) {
+
+
+                        actionHTML = `
+
+                            <button
+                                class="cash-btn"
+                                style="background:#b45309;border-color:#f59e0b;"
+                                onclick="adminEndReservation(${reservation.id})">
+
+                                🛑 END RESERVATION
+
+                            </button>
+
+                        `;
+
+
+                    }
+                    else if (
                         !reservation.exit_time
                     ) {
 
@@ -3684,6 +3957,105 @@
             console.error(
                 "Reservations Error:",
                 error
+            );
+
+        }
+
+    }
+
+
+
+    /* ============================================================
+       ADMIN END RESERVATION
+    ============================================================ */
+
+    async function adminEndReservation(
+        reservationId
+    ) {
+
+
+        const confirmed =
+            confirm(
+                "End this reservation now?"
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/admin-end-reservation",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                reservation_id:
+                                    reservationId
+
+                            })
+
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+
+                alert(
+                    data.message ||
+                    "Unable to end reservation."
+                );
+
+
+                return;
+
+            }
+
+
+            alert(
+                "Reservation ended successfully."
+            );
+
+
+            await loadReservations();
+
+            await updateParkingStatus();
+
+
+        }
+        catch (error) {
+
+
+            console.error(
+                "Admin End Reservation Error:",
+                error
+            );
+
+
+            alert(
+                "Unable to end reservation."
             );
 
         }

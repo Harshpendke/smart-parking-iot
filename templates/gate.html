@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking - Gate Web</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #08111f;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            z-index: 1000;
+            background: linear-gradient(135deg, #111c35, #172554);
+            border-bottom: 1px solid #26365c;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.30);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 21px;
+            font-weight: bold;
+            color: #ffffff;
+            white-space: nowrap;
+            margin-right: 35px;
+        }
+
+        .nav-logo-icon {
+            font-size: 25px;
+        }
+
+        .nav-admin {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-badge {
+            background: #1e3a8a;
+            border: 1px solid #3b82f6;
+            padding: 9px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .live-badge {
+            background: #166534;
+            border: 1px solid #22c55e;
+            color: #bbf7d0;
+            padding: 9px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .main {
+            max-width: 1400px;
+            margin: auto;
+            padding: 100px 30px 50px;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .page-header p {
+            color: #aab8d4;
+            font-size: 14px;
+        }
+
+        .section {
+            background: #0e192d;
+            border: 1px solid #26365c;
+            border-radius: 15px;
+            padding: 22px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .section-subtitle {
+            color: #8497ba;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .slot-card {
+            background: #111c31;
+            border: 1px solid #26365c;
+            border-radius: 15px;
+            padding: 22px;
+            min-height: 250px;
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .slot-card.occupied {
+            border-color: #ef4444;
+            background: linear-gradient(145deg, #211827, #171827);
+        }
+
+        .slot-card.reserved {
+            border-color: #facc15;
+            background: linear-gradient(145deg, #1f1c14, #171827);
+        }
+
+        .slot-card.available {
+            border-color: #22c55e;
+        }
+
+        .slot-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .status-dot.red {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        .status-dot.yellow {
+            background: #facc15;
+            box-shadow: 0 0 10px #facc15;
+        }
+
+        .vehicle-area {
+            height: 105px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .car {
+            font-size: 70px;
+        }
+
+        .empty {
+            font-size: 58px;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .slot-status {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .slot-status.green {
+            color: #4ade80;
+        }
+
+        .slot-status.red {
+            color: #f87171;
+        }
+
+        .slot-status.yellow {
+            color: #facc15;
+        }
+
+        .gate-card {
+            background: linear-gradient(135deg, #111c35, #0f172a);
+            border: 1px solid #26365c;
+            border-radius: 15px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .gate-card.open {
+            border-color: #22c55e;
+        }
+
+        .gate-card.closed {
+            border-color: #ef4444;
+        }
+
+        .gate-icon {
+            font-size: 64px;
+            margin-bottom: 12px;
+        }
+
+        .gate-label {
+            color: #94a3c7;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .gate-value {
+            font-size: 42px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .gate-value.open {
+            color: #4ade80;
+        }
+
+        .gate-value.closed {
+            color: #f87171;
+        }
+
+        .gate-detail {
+            color: #8497ba;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .hardware-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+
+        .hardware-card {
+            background: #111c31;
+            border: 1px solid #26365c;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .hardware-icon {
+            font-size: 38px;
+            margin-bottom: 10px;
+        }
+
+        .hardware-card h3 {
+            margin-bottom: 7px;
+            font-size: 16px;
+        }
+
+        .hardware-card p {
+            color: #8497ba;
+            font-size: 13px;
+        }
+
+        .hw-online {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .hw-offline {
+            color: #f87171;
+            font-weight: bold;
+        }
+
+        .hw-noreading {
+            color: #facc15;
+            font-weight: bold;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th {
+            background: rgba(37,99,235,0.25);
+            color: #93c5fd;
+            padding: 14px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 13px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .history-empty {
+            text-align: center;
+            color: #64748b;
+            padding: 25px;
+        }
+
+        .status-active {
+            color: #60a5fa;
+            font-weight: bold;
+        }
+
+        .payment-paid {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .payment-pending {
+            color: #facc15;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            color: #607394;
+            font-size: 12px;
+            padding: 20px;
+        }
+
+        @media (max-width: 1100px) {
+            .hardware-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .slots-grid,
+            .hardware-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                padding: 0 15px;
+            }
+
+            .nav-logo {
+                margin-right: 10px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main {
+                padding: 90px 15px 30px;
+            }
+
+            .navbar {
+                height: 65px;
+            }
+
+            .gate-value {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-logo">
+        <span class="nav-logo-icon">🚗</span>
+        <span>Smart Parking</span>
+    </div>
+
+    <div class="nav-admin">
+        <div class="admin-badge">🚧 GATE WEB</div>
+        <div class="live-badge">● LIVE MONITOR</div>
+    </div>
+</nav>
+
+<main class="main">
+
+    <div class="page-header">
+        <h1>🚗 Smart Parking</h1>
+        <p>🚧 GATE WEB — Parking entrance monitoring interface</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🅿️ PARKING SLOTS</div>
+        <div class="section-subtitle">Live occupancy for Slot 1, Slot 2 and Slot 3</div>
+
+        <div class="slots-grid">
+            <div id="slot1" class="slot-card available">
+                <div class="slot-name">SLOT 1</div>
+                <div>
+                    <span id="dot1" class="status-dot"></span>
+                </div>
+                <div id="vehicle1" class="vehicle-area">
+                    <div class="empty">P</div>
+                </div>
+                <div id="status1" class="slot-status green">🟢 AVAILABLE</div>
+            </div>
+
+            <div id="slot2" class="slot-card available">
+                <div class="slot-name">SLOT 2</div>
+                <div>
+                    <span id="dot2" class="status-dot"></span>
+                </div>
+                <div id="vehicle2" class="vehicle-area">
+                    <div class="empty">P</div>
+                </div>
+                <div id="status2" class="slot-status green">🟢 AVAILABLE</div>
+            </div>
+
+            <div id="slot3" class="slot-card available">
+                <div class="slot-name">SLOT 3</div>
+                <div>
+                    <span id="dot3" class="status-dot"></span>
+                </div>
+                <div id="vehicle3" class="vehicle-area">
+                    <div class="empty">P</div>
+                </div>
+                <div id="status3" class="slot-status green">🟢 AVAILABLE</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🚧 GATE STATUS</div>
+        <div class="section-subtitle">Derived from parking availability</div>
+
+        <div id="gateCard" class="gate-card open">
+            <div id="gateIcon" class="gate-icon">🚪</div>
+            <div class="gate-label">🚧 PARKING GATE</div>
+            <div id="gateValue" class="gate-value open">OPEN</div>
+            <div id="gateDetail" class="gate-detail">At least one parking slot is available</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🔧 HARDWARE STATUS</div>
+        <div class="section-subtitle">ESP32, sensors and servo monitoring via Flask backend</div>
+
+        <div class="hardware-grid">
+            <div class="hardware-card">
+                <div id="esp32Icon" class="hardware-icon">🟢</div>
+                <h3>ESP32</h3>
+                <p id="esp32Status" class="hw-online">ONLINE</p>
+            </div>
+
+            <div class="hardware-card">
+                <div id="sensor1Icon" class="hardware-icon">🟢</div>
+                <h3>Sensor 1</h3>
+                <p id="sensor1Status" class="hw-online">ONLINE</p>
+            </div>
+
+            <div class="hardware-card">
+                <div id="sensor2Icon" class="hardware-icon">🟢</div>
+                <h3>Sensor 2</h3>
+                <p id="sensor2Status" class="hw-online">ONLINE</p>
+            </div>
+
+            <div class="hardware-card">
+                <div id="sensor3Icon" class="hardware-icon">🟢</div>
+                <h3>Sensor 3</h3>
+                <p id="sensor3Status" class="hw-online">ONLINE</p>
+            </div>
+
+            <div class="hardware-card">
+                <div id="servoIcon" class="hardware-icon">🚪</div>
+                <h3>Servo / Gate</h3>
+                <p id="servoStatus" class="hw-online">OPEN</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📋 PARKING HISTORY</div>
+        <div class="section-subtitle">Recent parking sessions from the existing system</div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Session ID</th>
+                        <th>Slot</th>
+                        <th>Entry Time</th>
+                        <th>Exit Time</th>
+                        <th>Duration</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr>
+                        <td colspan="7" class="history-empty">Loading parking history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<footer>
+    Smart Parking Management System • Gate Web Monitor
+</footer>
+
+<script>
+    let reservations = [];
+
+    function cacheBust(path) {
+        return path + "?time=" + Date.now();
+    }
+
+    function formatDuration(seconds) {
+        if (seconds === null || seconds === undefined || seconds === "") {
+            return "--";
+        }
+
+        seconds = Number(seconds);
+
+        if (isNaN(seconds)) {
+            return "--";
+        }
+
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+
+        return (
+            String(hours).padStart(2, "0") + ":" +
+            String(minutes).padStart(2, "0") + ":" +
+            String(secs).padStart(2, "0")
+        );
+    }
+
+    function getActiveReservationForSlot(slotNumber) {
+        const now = new Date();
+
+        return reservations.find(function (reservation) {
+            const reservationSlot = String(reservation.slot || "")
+                .replace("slot", "")
+                .trim();
+
+            if (reservationSlot !== String(slotNumber)) {
+                return false;
+            }
+
+            const reservationStatus = String(reservation.status || "")
+                .trim()
+                .toUpperCase();
+
+            if (reservationStatus !== "RESERVED" && reservationStatus !== "OCCUPIED") {
+                return false;
+            }
+
+            const startText = String(reservation.reservation_start || "").trim();
+            const endText = String(reservation.reservation_end || "").trim();
+            const start = new Date(startText.replace(" ", "T"));
+            const end = new Date(endText.replace(" ", "T"));
+
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                return true;
+            }
+
+            return now >= start && now < end;
+        });
+    }
+
+    function setHardwareState(iconId, statusId, state, detail) {
+        const icon = document.getElementById(iconId);
+        const status = document.getElementById(statusId);
+
+        if (!icon || !status) {
+            return;
+        }
+
+        if (state === "ONLINE") {
+            icon.textContent = "🟢";
+            status.className = "hw-online";
+            status.textContent = detail || "ONLINE";
+        } else if (state === "NO READING") {
+            icon.textContent = "🟡";
+            status.className = "hw-noreading";
+            status.textContent = detail || "NO READING";
+        } else {
+            icon.textContent = "🔴";
+            status.className = "hw-offline";
+            status.textContent = detail || "OFFLINE";
+        }
+    }
+
+    function updateSlotDisplay(slotNumber, physicalStatus) {
+        const slot = document.getElementById("slot" + slotNumber);
+        const statusElement = document.getElementById("status" + slotNumber);
+        const vehicleArea = document.getElementById("vehicle" + slotNumber);
+        const dot = document.getElementById("dot" + slotNumber);
+
+        if (!slot || !statusElement || !vehicleArea || !dot) {
+            return;
+        }
+
+        const sensorValue = String(physicalStatus || "").toUpperCase();
+        const occupied = sensorValue.includes("OCCUPIED") && !sensorValue.includes("NO READING");
+        const noReading = sensorValue.includes("NO READING") || sensorValue === "";
+        const activeReservation = getActiveReservationForSlot(slotNumber);
+
+        slot.classList.remove("occupied", "reserved", "available");
+
+        if (occupied) {
+            slot.classList.add("occupied");
+            dot.className = "status-dot red";
+            vehicleArea.innerHTML = '<div class="car">🚗</div>';
+            statusElement.className = "slot-status red";
+            statusElement.textContent = "🔴 OCCUPIED";
+            return "OCCUPIED";
+        }
+
+        if (activeReservation) {
+            slot.classList.add("reserved");
+            dot.className = "status-dot yellow";
+            vehicleArea.innerHTML = '<div class="car">🎫</div>';
+            statusElement.className = "slot-status yellow";
+            statusElement.textContent = "🟡 RESERVED";
+            return "RESERVED";
+        }
+
+        slot.classList.add("available");
+        dot.className = "status-dot";
+        vehicleArea.innerHTML = '<div class="empty">P</div>';
+        statusElement.className = "slot-status green";
+        statusElement.textContent = "🟢 AVAILABLE";
+
+        if (noReading) {
+            return "NO READING";
+        }
+
+        return "AVAILABLE";
+    }
+
+    function updateGate(occupiedCount) {
+        const gateCard = document.getElementById("gateCard");
+        const gateIcon = document.getElementById("gateIcon");
+        const gateValue = document.getElementById("gateValue");
+        const gateDetail = document.getElementById("gateDetail");
+        const servoIcon = document.getElementById("servoIcon");
+        const servoStatus = document.getElementById("servoStatus");
+
+        const closed = occupiedCount >= 3;
+
+        if (closed) {
+            gateCard.className = "gate-card closed";
+            gateIcon.textContent = "🔒";
+            gateValue.className = "gate-value closed";
+            gateValue.textContent = "CLOSED";
+            gateDetail.textContent = "All three parking slots are occupied";
+            servoIcon.textContent = "🔒";
+            servoStatus.className = "hw-offline";
+            servoStatus.textContent = "CLOSED";
+        } else {
+            gateCard.className = "gate-card open";
+            gateIcon.textContent = "🚪";
+            gateValue.className = "gate-value open";
+            gateValue.textContent = "OPEN";
+            gateDetail.textContent = "At least one parking slot is available";
+            servoIcon.textContent = "🚪";
+            servoStatus.className = "hw-online";
+            servoStatus.textContent = "OPEN";
+        }
+    }
+
+    function updateSensorCard(slotNumber, physicalStatus, backendOnline) {
+        const iconId = "sensor" + slotNumber + "Icon";
+        const statusId = "sensor" + slotNumber + "Status";
+        const sensorValue = String(physicalStatus || "").toUpperCase();
+
+        if (!backendOnline) {
+            setHardwareState(iconId, statusId, "OFFLINE", "OFFLINE");
+            return;
+        }
+
+        if (!sensorValue || sensorValue.includes("NO READING")) {
+            setHardwareState(iconId, statusId, "NO READING", "NO READING");
+            return;
+        }
+
+        setHardwareState(iconId, statusId, "ONLINE", "ONLINE");
+    }
+
+    async function loadReservations() {
+        try {
+            const response = await fetch(cacheBust("/reservations"), {
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            reservations = Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error("Reservations error:", error);
+        }
+    }
+
+    async function updateParkingAndHardware() {
+        await loadReservations();
+
+        try {
+            const response = await fetch(cacheBust("/status"), {
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                throw new Error("Status request failed");
+            }
+
+            const data = await response.json();
+
+            setHardwareState("esp32Icon", "esp32Status", "ONLINE", "ONLINE");
+
+            const slot1 = data.slot1;
+            const slot2 = data.slot2;
+            const slot3 = data.slot3;
+
+            updateSlotDisplay(1, slot1);
+            updateSlotDisplay(2, slot2);
+            updateSlotDisplay(3, slot3);
+
+            const occupied = [slot1, slot2, slot3].filter(function (status) {
+                const value = String(status || "").toUpperCase();
+                return value.includes("OCCUPIED") && !value.includes("NO READING");
+            }).length;
+
+            updateGate(occupied);
+
+            updateSensorCard(1, slot1, true);
+            updateSensorCard(2, slot2, true);
+            updateSensorCard(3, slot3, true);
+        } catch (error) {
+            console.error("Backend connection error:", error);
+
+            setHardwareState("esp32Icon", "esp32Status", "OFFLINE", "OFFLINE");
+            updateSensorCard(1, "", false);
+            updateSensorCard(2, "", false);
+            updateSensorCard(3, "", false);
+
+            const servoStatus = document.getElementById("servoStatus");
+            const servoIcon = document.getElementById("servoIcon");
+
+            if (servoStatus && servoIcon) {
+                servoIcon.textContent = "🔴";
+                servoStatus.className = "hw-offline";
+                servoStatus.textContent = "OFFLINE";
+            }
+        }
+    }
+
+    function setCell(row, text, className) {
+        const cell = document.createElement("td");
+        cell.textContent = text;
+        if (className) {
+            cell.className = className;
+        }
+        row.appendChild(cell);
+    }
+
+    async function loadParkingHistory() {
+        try {
+            const response = await fetch(cacheBust("/sessions"), {
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                throw new Error("Sessions request failed");
+            }
+
+            const records = await response.json();
+            const historyBody = document.getElementById("historyBody");
+            historyBody.innerHTML = "";
+
+            if (!records || records.length === 0) {
+                historyBody.innerHTML =
+                    '<tr><td colspan="7" class="history-empty">No parking history available.</td></tr>';
+                return;
+            }
+
+            records.forEach(function (session) {
+                const row = document.createElement("tr");
+                const hasExit = Boolean(session.exit_time);
+                const amount =
+                    session.amount !== null && session.amount !== undefined
+                        ? "₹" + Number(session.amount).toFixed(2)
+                        : "--";
+                const paymentStatus = String(session.payment_status || "PENDING").toUpperCase();
+                const statusText = hasExit ? paymentStatus : "ACTIVE";
+                let statusClass = "status-active";
+
+                if (hasExit && paymentStatus === "PAID") {
+                    statusClass = "payment-paid";
+                } else if (hasExit) {
+                    statusClass = "payment-pending";
+                }
+
+                setCell(row, String(session.id ?? "--"));
+                setCell(row, String(session.slot ?? "--"));
+                setCell(row, session.entry_time || "--");
+                setCell(row, hasExit ? session.exit_time : "ACTIVE");
+                setCell(row, formatDuration(session.duration_seconds));
+                setCell(row, amount);
+                setCell(row, statusText, statusClass);
+
+                historyBody.appendChild(row);
+            });
+        } catch (error) {
+            console.error("History error:", error);
+        }
+    }
+
+    setInterval(updateParkingAndHardware, 1500);
+    setInterval(loadParkingHistory, 2500);
+
+    updateParkingAndHardware();
+    loadParkingHistory();
+</script>
+
+</body>
+</html>

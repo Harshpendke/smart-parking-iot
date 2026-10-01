@@ -1871,7 +1871,7 @@ footer {
                 id="paymentPagePayButton"
                 class="pay-button"
                 style="display:none;"
-                onclick="payCurrentSession()">
+                onclick="payPaymentPageSession()">
 
                 💳 PAY NOW
 
@@ -3613,6 +3613,41 @@ async function payCurrentSession() {
 
 }
 
+
+
+/* =====================================================
+   PAYMENT PAGE PAYMENT
+   Always use the session currently displayed on the
+   Payments page instead of relying on a stale global ID.
+===================================================== */
+
+async function payPaymentPageSession() {
+
+    if (!sessions || sessions.length === 0) {
+        alert("No parking session found.");
+        return;
+    }
+
+    /*
+     * Prefer the newest unpaid session. This keeps the
+     * Payments page synchronized with the last parking
+     * session shown to the user.
+     */
+    const unpaidSession = sessions.find(function(session) {
+        return String(session.payment_status || "PENDING").toUpperCase() !== "PAID";
+    });
+
+    const sessionToPay = unpaidSession || sessions[0];
+
+    if (!sessionToPay || !sessionToPay.id) {
+        alert("No parking session available for payment.");
+        return;
+    }
+
+    currentSessionId = sessionToPay.id;
+
+    await paySession(sessionToPay.id);
+}
 
 
 /* =====================================================

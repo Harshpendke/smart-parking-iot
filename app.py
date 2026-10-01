@@ -968,6 +968,17 @@ def user_dashboard():
         "user.html"
     )
 
+# ==========================================
+# GATE WEB
+# ==========================================
+
+@app.route("/gate")
+def gate():
+
+    return render_template(
+        "gate.html"
+    )
+
 
 # ==========================================
 # CREATE RAZORPAY ORDER
@@ -2284,6 +2295,172 @@ def reservations():
 
 
 # ==========================================
+# ADMIN END RESERVATION
+# ==========================================
+
+@app.route(
+    "/admin-end-reservation",
+    methods=["POST"]
+)
+def admin_end_reservation():
+
+    if not session.get("admin_logged_in"):
+
+        return jsonify({
+            "success": False,
+            "message": "Admin login required."
+        }), 401
+
+    try:
+
+        data = request.get_json(silent=True)
+
+        if not data:
+
+            return jsonify({
+                "success": False,
+                "message": "Request data is missing."
+            }), 400
+
+        reservation_id = data.get("reservation_id")
+
+        if not reservation_id:
+
+            return jsonify({
+                "success": False,
+                "message": "Reservation ID is required."
+            }), 400
+
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                id,
+                status,
+                entry_time
+            FROM reservations
+            WHERE id = ?
+        """, (reservation_id,))
+
+        reservation = cursor.fetchone()
+
+        if not reservation:
+
+            conn.close()
+
+            return jsonify({
+                "success": False,
+                "message": "Reservation not found."
+            }), 404
+
+        current_status = str(
+            reservation["status"] or ""
+        ).upper()
+
+        if current_status not in ("RESERVED", "OCCUPIED"):
+
+            conn.close()
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "This reservation is already ended."
+            }), 400
+
+        end_time = datetime.now()
+
+        # If the vehicle entered, calculate the actual
+        # parking duration and charge before ending.
+        if current_status == "OCCUPIED" and reservation["entry_time"]:
+
+            try:
+                entry_time = datetime.strptime(
+                    reservation["entry_time"],
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+                duration_seconds = max(
+                    0,
+                    int(
+                        (end_time - entry_time).total_seconds()
+                    )
+                )
+
+                amount, _ = calculate_parking_fee(
+                    duration_seconds
+                )
+
+                cursor.execute("""
+                    UPDATE reservations
+                    SET
+                        status = 'COMPLETED',
+                        exit_time = ?,
+                        duration_seconds = ?,
+                        amount = ?
+                    WHERE id = ?
+                """, (
+                    end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    duration_seconds,
+                    amount,
+                    reservation_id
+                ))
+
+            except ValueError:
+
+                cursor.execute("""
+                    UPDATE reservations
+                    SET
+                        status = 'COMPLETED',
+                        exit_time = ?
+                    WHERE id = ?
+                """, (
+                    end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                    reservation_id
+                ))
+
+        else:
+
+            # Reservation was never occupied; end it without
+            # creating a normal parking session.
+            cursor.execute("""
+                UPDATE reservations
+                SET
+                    status = 'COMPLETED',
+                    exit_time = ?
+                WHERE id = ?
+            """, (
+                end_time.strftime("%Y-%m-%d %H:%M:%S"),
+                reservation_id
+            ))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Reservation ended by admin.",
+            "reservation_id": reservation_id,
+            "status": "COMPLETED",
+            "exit_time":
+                end_time.strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+    except Exception as e:
+
+        print(
+            "ADMIN END RESERVATION ERROR:",
+            e
+        )
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+# ==========================================
 # RESERVATION CASH PAYMENT
 # ADMIN USE
 # ==========================================
@@ -2467,29 +2644,22 @@ def read_esp32():
                 PORT
             )
 
-
             ser = serial.Serial(
                 port=PORT,
                 baudrate=BAUD_RATE,
                 timeout=1
             )
 
-
             time.sleep(2)
-
 
             print(
                 "Connected to ESP32 on",
                 PORT
             )
 
-
             initial_status_received = False
-
             last_status = None
-
             current_reading = {}
-
 
             while True:
 
@@ -2502,125 +2672,63 @@ def read_esp32():
                     .strip()
                 )
 
-
                 if not line:
-
                     continue
 
+                print("ESP32:", line)
 
-                print(
-                    "ESP32:",
-                    line
-                )
-
-
-                # --------------------------------
-                # SLOT 1
-                # --------------------------------
-                # NO READING is treated as EMPTY
-                # so the dashboard does not get stuck.
-
-                if line.startswith(
-                    "Slot 1:"
-                ):
-
-                    if "OCCUPIED" in line:
-
-                        current_reading[
-                            "slot1"
-                        ] = "OCCUPIED"
-
-                    elif (
-                        "EMPTY" in line
-                        or
-                        "NO READING" in line
-                    ):
-
-                        current_reading[
-                            "slot1"
-                        ] = "EMPTY"
-
+                # Normalize the serial text so that
+                # EMPTY / OCCUPIED / NO READING are
+                # recognized reliably.
+                normalized = line.upper().strip()
 
                 # --------------------------------
-                # SLOT 2
+                # READ SLOT STATUS
                 # --------------------------------
+                #
+                # IMPORTANT:
+                # NO READING is deliberately treated
+                # as EMPTY.
+                #
+                # Example:
+                # Slot 1: NO READING -> EMPTY
+                # Slot 1: EMPTY      -> EMPTY
+                # Slot 1: OCCUPIED   -> OCCUPIED
+                #
+                for slot_number in (1, 2, 3):
 
-                elif line.startswith(
-                    "Slot 2:"
-                ):
+                    prefix = f"SLOT {slot_number}:"
 
-                    if "OCCUPIED" in line:
+                    if normalized.startswith(prefix):
 
-                        current_reading[
-                            "slot2"
-                        ] = "OCCUPIED"
+                        slot_key = f"slot{slot_number}"
+                        reading_text = normalized[len(prefix):].strip()
 
-                    elif (
-                        "EMPTY" in line
-                        or
-                        "NO READING" in line
-                    ):
+                        if "OCCUPIED" in reading_text:
+                            current_reading[slot_key] = "OCCUPIED"
 
-                        current_reading[
-                            "slot2"
-                        ] = "EMPTY"
+                        elif (
+                            "NO READING" in reading_text
+                            or "EMPTY" in reading_text
+                        ):
+                            current_reading[slot_key] = "EMPTY"
 
-
-                # --------------------------------
-                # SLOT 3
-                # --------------------------------
-
-                elif line.startswith(
-                    "Slot 3:"
-                ):
-
-                    if "OCCUPIED" in line:
-
-                        current_reading[
-                            "slot3"
-                        ] = "OCCUPIED"
-
-                    elif (
-                        "EMPTY" in line
-                        or
-                        "NO READING" in line
-                    ):
-
-                        current_reading[
-                            "slot3"
-                        ] = "EMPTY"
-
+                        break
 
                 # --------------------------------
-                # WAIT FOR ALL 3 SLOTS
+                # WAIT UNTIL ALL 3 SLOT READINGS
                 # --------------------------------
 
                 if len(current_reading) < 3:
-
                     continue
 
-
                 new_status = {
-
-                    "slot1":
-                        current_reading[
-                            "slot1"
-                        ],
-
-                    "slot2":
-                        current_reading[
-                            "slot2"
-                        ],
-
-                    "slot3":
-                        current_reading[
-                            "slot3"
-                        ]
+                    "slot1": current_reading["slot1"],
+                    "slot2": current_reading["slot2"],
+                    "slot3": current_reading["slot3"]
                 }
 
-
                 current_reading = {}
-
 
                 # --------------------------------
                 # INITIAL STATUS
@@ -2628,14 +2736,8 @@ def read_esp32():
 
                 if not initial_status_received:
 
-                    parking_status = (
-                        new_status.copy()
-                    )
-
-                    last_status = (
-                        new_status.copy()
-                    )
-
+                    parking_status = new_status.copy()
+                    last_status = new_status.copy()
                     initial_status_received = True
 
                     print(
@@ -2645,6 +2747,16 @@ def read_esp32():
 
                     continue
 
+                # --------------------------------
+                # ALWAYS UPDATE CURRENT STATUS
+                # --------------------------------
+                #
+                # This is important for the dashboard.
+                # Even when a sensor reports NO READING,
+                # it has already been converted to EMPTY.
+                #
+
+                parking_status = new_status.copy()
 
                 # --------------------------------
                 # CHECK STATUS CHANGES
@@ -2652,63 +2764,38 @@ def read_esp32():
 
                 if new_status != last_status:
 
-                    for slot in [
+                    for slot in (
                         "slot1",
                         "slot2",
                         "slot3"
-                    ]:
+                    ):
 
-                        old_value = (
-                            last_status[slot]
-                        )
-
-                        new_value = (
-                            new_status[slot]
-                        )
-
+                        old_value = last_status[slot]
+                        new_value = new_status[slot]
 
                         # Vehicle entered
                         if (
-                            old_value
-                            == "EMPTY"
+                            old_value == "EMPTY"
                             and
-                            new_value
-                            == "OCCUPIED"
+                            new_value == "OCCUPIED"
                         ):
 
-                            start_parking_session(
-                                slot
-                            )
-
+                            start_parking_session(slot)
 
                         # Vehicle exited
                         elif (
-                            old_value
-                            == "OCCUPIED"
+                            old_value == "OCCUPIED"
                             and
-                            new_value
-                            == "EMPTY"
+                            new_value == "EMPTY"
                         ):
 
-                            end_parking_session(
-                                slot
-                            )
+                            end_parking_session(slot)
 
-
-                    parking_status = (
-                        new_status.copy()
-                    )
-
-
-                    save_status(
-                        new_status
-                    )
-
+                    save_status(new_status)
 
                     session_statistics[
                         "total_events"
                     ] += 1
-
 
                     session_statistics[
                         "last_update"
@@ -2716,11 +2803,12 @@ def read_esp32():
                         "%Y-%m-%d %H:%M:%S"
                     )
 
-
-                    last_status = (
-                        new_status.copy()
+                    print(
+                        "Parking status updated:",
+                        new_status
                     )
 
+                    last_status = new_status.copy()
 
         except Exception as e:
 
@@ -2734,20 +2822,15 @@ def read_esp32():
             )
             print()
 
-
             time.sleep(3)
-
 
         finally:
 
             if ser:
 
                 try:
-
                     ser.close()
-
                 except Exception:
-
                     pass
 
 
